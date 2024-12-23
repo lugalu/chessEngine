@@ -4,7 +4,7 @@ import Foundation
 
 class ChessPiece {
     private(set) var hadFirstMove: Bool = false
-    var moveDistance: Int { 1 }
+    var moveDistance: Int { 64 }
     var moves: [MoveDirections] { MoveDirections.allCases }
     var attackDirections: [MoveDirections] { moves }
     
@@ -16,6 +16,3 @@ class ChessPiece {
     
 }
 
-class Queen: ChessPiece {
-    override var moveDistance: Int { 64 }
-}
