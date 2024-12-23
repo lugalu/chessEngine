@@ -5,6 +5,8 @@ import Foundation
 class ChessPiece {
     private(set) var hadFirstMove: Bool = false
     var moveDistance: Int { 1 }
+    var moves: [MoveDirections] { MoveDirections.allCases }
+    var attackDirections: [MoveDirections] { moves }
     
     init(){}
     
@@ -14,11 +16,6 @@ class ChessPiece {
     
 }
 
-class Pawn: ChessPiece {
-    override var moveDistance: Int { self.hadFirstMove ? 1 : 2 }
-    
-    override init() {
-        super.init()
-    }
-    
+class Queen: ChessPiece {
+    override var moveDistance: Int { 64 }
 }
