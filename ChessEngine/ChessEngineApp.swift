@@ -6,7 +6,9 @@ import SwiftUI
 struct ChessEngineApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                MainMenu()
+            }
         }
     }
 }

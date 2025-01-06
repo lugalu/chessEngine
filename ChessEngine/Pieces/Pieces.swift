@@ -57,14 +57,3 @@ class Knight: ChessPiece {
                                             .knightDownLeftOne,
                                             .knightDownLeftTwo] }
 }
-
-/*
- Pawn up
- Rook up down left right
- Queen all
- Bishop Diagonals
- king all
- Knight L
- 
- 
-*/
