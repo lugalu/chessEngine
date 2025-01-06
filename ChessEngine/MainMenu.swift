@@ -5,21 +5,13 @@ import SpriteKit
 
 struct MainMenu: View {
     
-    var scene: ChessSceneInterface = ChessSchene()
     @State var presentScene = false
     
     var body: some View {
-
-        NavigationLink(destination: SpriteView(scene: scene), label: {
-                Text("StartNewGame")
-            })
-//        .background(WindowAccessor { window in
-//                            if let window = window {
-//                                window.delegate = WindowDelegate.shared
-//                            }
-//                        })
         
-        
+        NavigationLink(destination: Test() , label: {
+            Text("StartNewGame")
+        })
         
     }
 }
@@ -29,31 +21,21 @@ struct MainMenu: View {
 }
 
 
-// View to access the NSWindow
-struct WindowAccessor: NSViewRepresentable {
-    let callback: (NSWindow?) -> Void
-    
-    func makeNSView(context: Context) -> NSView {
-        let nsView = NSView()
-        DispatchQueue.main.async {
-            if let window = nsView.window {
-                callback(window)
+struct Test: View {
+    var scene: ChessSceneInterface = ChessScene()
+    var body: some View {
+        SpriteView(scene: scene, preferredFramesPerSecond: 60)
+            .onAppear {
+                scene.configure()
             }
-        }
-        return nsView
-    }
-    
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-// NSWindowDelegate Implementation
-class WindowDelegate: NSObject, NSWindowDelegate {
-    static let shared = WindowDelegate()
-    
-    func windowDidResize(_ notification: Notification) {
-        if let window = notification.object as? NSWindow {
-            let newSize = window.frame.size
-            print("Window resized to: \(newSize)")
-        }
+            .background {
+                WindowAccessor { window in
+                    if let window = window {
+                        let delegate = WindowDelegate.shared
+                        delegate.notified = scene
+                        window.delegate = delegate
+                    }
+                }
+            }
     }
 }

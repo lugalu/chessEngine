@@ -9,6 +9,7 @@ struct ChessEngineApp: App {
             NavigationStack {
                 MainMenu()
             }
+            .frame(minWidth: 500, minHeight: 500)
         }
     }
 }
