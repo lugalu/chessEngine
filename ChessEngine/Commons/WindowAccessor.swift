@@ -18,7 +18,6 @@ struct WindowAccessor: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
-// NSWindowDelegate Implementation
 class WindowDelegate: NSObject, NSWindowDelegate {
     static let shared: WindowDelegate = WindowDelegate()
     var notified: ChessSceneInterface? = nil
@@ -27,7 +26,8 @@ class WindowDelegate: NSObject, NSWindowDelegate {
     
     func windowDidResize(_ notification: Notification) {
         if let window = notification.object as? NSWindow {
-            let newSize = window.frame.size
+            var newSize = window.frame.size
+            newSize.height -= Constants.topBarSize
             notified?.updateSize(newSize)
         }
     }
