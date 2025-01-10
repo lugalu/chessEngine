@@ -14,4 +14,6 @@ struct Constants {
         newSize?.height -= topBarSize
         return newSize
     }
+    
+    static public let chessRowsColumns: Double = 8
 }

@@ -7,7 +7,7 @@ struct ChessView: View {
     var body: some View {
         SpriteView(scene: scene, preferredFramesPerSecond: 60)
             .onAppear {
-                scene.configure()
+                scene.configure(whitePlayerName: "White", blackPlayerName: "Black")
             }
             .background {
                 WindowAccessor { window in

@@ -4,25 +4,46 @@ import SpriteKit
 
 protocol ChessSceneInterface: SKScene {
     func updateSize(_ size: CGSize)
-    func configure()
+    func configure(whitePlayerName: String, blackPlayerName: String)
 }
 
 class ChessScene: SKScene, ChessSceneInterface  {
+    
     private let leftMenu: SKSpriteNode =  {
-        let node = SKSpriteNode(color: .red, size: CGSize(width: 250, height: 200))
-        node.anchorPoint = CGPoint(x: 0, y: 0)
-        return node
-    }()
-    private let chessBaseNode: SKSpriteNode = {
-        let node = SKSpriteNode(
-            color: .blue,
-            size: CGSize(width: 100, height: 100)
+        let node = SKSpriteNode(color: .red,
+                                size: CGSize(width: 250, height: 0)
         )
         node.anchorPoint = CGPoint(x: 0, y: 0)
+        
         return node
     }()
+    
+    private let chessBaseNode: SKSpriteNode = {
+        let node = SKSpriteNode(color: .clear, size: .zero)
+        node.anchorPoint = CGPoint(x: 0, y: 0)
+        return node
+    }()
+    
+    private let nodeGrid: [[SKSpriteNode]] = {
+        var arr: [SKSpriteNode] = []
+        
+        for i in 1...Int(Constants.chessRowsColumns) {
+            let color: NSColor = i.isMultiple(of: 2) ? .white : .black
+            arr.append(SKSpriteNode(color: color, size: .zero))
+        }
+        
+        var result: [[SKSpriteNode]] = []
+        for i in 1...Int(Constants.chessRowsColumns) {
+            var arr = arr.map { $0.copy() as! SKSpriteNode }
+            arr = i.isMultiple(of: 2) ? arr : arr.reversed()
+            result.append(arr)
+        }
+        
+        return result
+    }()
+    
     override init() {
-        super.init(size: .init(width: 100, height: 100))
+        super.init(size: .zero)
         addChild(leftMenu)
         addChild(chessBaseNode)
     }
@@ -33,42 +54,58 @@ class ChessScene: SKScene, ChessSceneInterface  {
         addChild(chessBaseNode)
     }
     
-    func configure() {
+    func configure(whitePlayerName: String = "White", blackPlayerName: String = "Black") {
         guard let size = Constants.adjustedScreenSize else {
             fatalError("NScreen not available")
         }
-        chessBaseNode.position = CGPoint(x: leftMenu.size.width, y: 0)
         
+        chessBaseNode.position = CGPoint(x: leftMenu.size.width, y: 0)
+        if nodeGrid.first!.first!.parent == nil {
+            nodeGrid.forEach { row in
+                row.forEach { column in
+                    chessBaseNode.addChild(column)
+                }
+            }
+            
+        }
         updateSize(size)
     }
     
     func updateSize(_ size: CGSize) {
         self.size = size
-        leftMenu.size = CGSize(
-            width: leftMenu.size.width,
-            height: size.height
-        )
+        leftMenu.size.height = size.height
         
-        let newSize = getCorrectSize(from: size)
-        chessBaseNode.size = newSize
-        var newXPos = (newSize.width - leftMenu.size.width) / 2 + leftMenu.size.width
-        newXPos = newXPos + newSize.width > size.width ? leftMenu.size.width : newXPos
-        chessBaseNode.position = CGPoint(
-            x: newXPos,
-            y: size.height - newSize.height
-        )
+        let squareSize = getSquare(from: size)
+        chessBaseNode.size = squareSize
+        
+        moveChessTableNode(squareSize, size)
     }
     
-    
-    private func getCorrectSize(from size: CGSize) -> CGSize {
+    private func getSquare(from size: CGSize) -> CGSize {
         let shortest = min(size.width - leftMenu.size.width, size.height)
-        print(
-            shortest,
-            size.width,
-            leftMenu.size.width,
-            size.width - leftMenu.size.width,
-            size.height
-        )
         return CGSize(width: shortest, height: shortest)
     }
+    
+    private func moveChessTableNode(_ squareSize: CGSize, _ size: CGSize) {
+        var newXPos = (squareSize.width - leftMenu.size.width) / 2
+        newXPos += leftMenu.size.width
+        
+        if newXPos + squareSize.width > size.width {
+            newXPos = leftMenu.size.width
+        }
+        
+        let newYPos = size.height - squareSize.height
+        
+        chessBaseNode.position.x = newXPos
+        chessBaseNode.position.y = newYPos
+    }
+    
+    private func updateGrid() {
+        let newSize = chessBaseNode.size
+        let newXSize = newSize.width / Constants.chessRowsColumns
+        let newYSize = newSize.height / Constants.chessRowsColumns
+        print(newXSize, newYSize)
+        //TODO: make the squares resize to the new board size
+    }
+    
 }
