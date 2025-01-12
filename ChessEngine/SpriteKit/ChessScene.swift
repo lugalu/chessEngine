@@ -21,6 +21,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
     private let chessBaseNode: SKSpriteNode = {
         let node = SKSpriteNode(color: .clear, size: .zero)
         node.anchorPoint = CGPoint(x: 0, y: 0)
+        
         return node
     }()
     
@@ -28,8 +29,10 @@ class ChessScene: SKScene, ChessSceneInterface  {
         var arr: [SKSpriteNode] = []
         
         for i in 1...Int(Constants.chessRowsColumns) {
-            let color: NSColor = i.isMultiple(of: 2) ? .white : .black
-            arr.append(SKSpriteNode(color: color, size: .zero))
+            let color: NSColor = i.isMultiple(of: 2) ? .black : .white
+            let node = SKSpriteNode(color: color, size: .zero)
+            node.anchorPoint = CGPoint(x: 0, y: 0)
+            arr.append(node)
         }
         
         var result: [[SKSpriteNode]] = []
@@ -79,6 +82,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         chessBaseNode.size = squareSize
         
         moveChessTableNode(squareSize, size)
+        updateGrid()
     }
     
     private func getSquare(from size: CGSize) -> CGSize {
@@ -101,11 +105,18 @@ class ChessScene: SKScene, ChessSceneInterface  {
     }
     
     private func updateGrid() {
-        let newSize = chessBaseNode.size
-        let newXSize = newSize.width / Constants.chessRowsColumns
-        let newYSize = newSize.height / Constants.chessRowsColumns
-        print(newXSize, newYSize)
-        //TODO: make the squares resize to the new board size
+        let newX = chessBaseNode.size.width / Constants.chessRowsColumns
+        let newY = chessBaseNode.size.height / Constants.chessRowsColumns
+        
+        let newSize = CGSize(width: newX, height: newY)
+        
+        nodeGrid.enumerated().forEach { y, row in
+            row.enumerated().forEach { x, item in
+                item.size = newSize
+                item.position.x = CGFloat(x) * item.size.width
+                item.position.y = CGFloat(y) * item.size.height
+            }
+        }
     }
     
 }
