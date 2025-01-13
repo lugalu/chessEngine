@@ -3,10 +3,12 @@
 import Foundation
 
 class ChessPiece {
+    var name: String { "Empty" }
     private(set) var hadFirstMove: Bool = false
     var moveDistance: Int { 64 }
-    var moves: [MoveDirections] { MoveDirections.allCases }
+    var moves: [MoveDirections] { [] }
     var attackDirections: [MoveDirections] { moves }
+
     
     init(){}
     

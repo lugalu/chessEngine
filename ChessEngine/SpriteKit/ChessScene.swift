@@ -45,6 +45,17 @@ class ChessScene: SKScene, ChessSceneInterface  {
         return result
     }()
     
+    private let chessMatrix: [[SKSpriteNode?]] = {
+        //make a factory or something to make this, the logic is a little more obtuse so is better
+        // I need to on the row 0 generate the first row of the black pieces
+        // row 1 all black pawns
+        //row 62 all white pawns
+        //row 63 first row of white pieces
+        
+        return []
+    }()
+    
+    
     override init() {
         super.init(size: .zero)
         addChild(leftMenu)

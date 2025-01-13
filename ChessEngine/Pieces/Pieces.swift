@@ -3,6 +3,7 @@
 import Foundation
 
 class Pawn: ChessPiece {
+    override var name: String { "Pawn" }
     override var moveDistance: Int { self.hadFirstMove ? 1 : 2 }
     override var moves: [MoveDirections] { [.up] }
     override var attackDirections: [MoveDirections] { [.diagonalUpRight,
@@ -10,6 +11,7 @@ class Pawn: ChessPiece {
 }
 
 class Rook: ChessPiece {
+    override var name: String { "Rook" }
     override var moves: [MoveDirections] { [.up,
                                             .down,
                                             .left,
@@ -17,6 +19,7 @@ class Rook: ChessPiece {
 }
 
 class Bishop: ChessPiece {
+    override var name: String { "Bishop" }
     override var moves: [MoveDirections] { [.diagonalUpLeft,
                                             .diagonalUpRight,
                                             .diagonalDownLeft,
@@ -24,6 +27,7 @@ class Bishop: ChessPiece {
 }
 
 class Queen: ChessPiece {
+    override var name: String { "Queen" }
     override var moves: [MoveDirections] { [.up,
                                             .down,
                                             .left,
@@ -35,6 +39,7 @@ class Queen: ChessPiece {
 }
 
 class King: ChessPiece {
+    override var name: String { "King" }
     override var moveDistance: Int { 1 }
     override var moves: [MoveDirections] { [.up,
                                             .down,
@@ -47,6 +52,7 @@ class King: ChessPiece {
 }
 
 class Knight: ChessPiece {
+    override var name: String { "Knight" }
     override var moveDistance: Int { 1 }
     override var moves: [MoveDirections] { [.knightUpRightOne,
                                             .knightUpRightTwo,
