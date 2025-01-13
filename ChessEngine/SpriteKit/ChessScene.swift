@@ -78,37 +78,32 @@ class ChessScene: SKScene, ChessSceneInterface  {
         self.size = size
         leftMenu.size.height = size.height
         
-        let squareSize = getSquare(from: size)
+        let squareSize = ResizeMath.getSquare(from: size)
         chessBaseNode.size = squareSize
         
         moveChessTableNode(squareSize, size)
         updateGrid()
     }
     
-    private func getSquare(from size: CGSize) -> CGSize {
-        let shortest = min(size.width - leftMenu.size.width, size.height)
-        return CGSize(width: shortest, height: shortest)
+        
+    
+}
+
+//Sizing calculations
+extension ChessScene {
+    func moveChessTableNode(_ squareSize: CGSize, _ size: CGSize) {
+        chessBaseNode.position = ResizeMath
+            .getCenteredPositionForSquare(
+                square: squareSize,
+                screenSize: size,
+                widthOffset: leftMenu.size.width
+            )
     }
     
-    private func moveChessTableNode(_ squareSize: CGSize, _ size: CGSize) {
-        var newXPos = (squareSize.width - leftMenu.size.width) / 2
-        newXPos += leftMenu.size.width
-        
-        if newXPos + squareSize.width > size.width {
-            newXPos = leftMenu.size.width
-        }
-        
-        let newYPos = size.height - squareSize.height
-        
-        chessBaseNode.position.x = newXPos
-        chessBaseNode.position.y = newYPos
-    }
-    
-    private func updateGrid() {
-        let newX = chessBaseNode.size.width / Constants.chessRowsColumns
-        let newY = chessBaseNode.size.height / Constants.chessRowsColumns
-        
-        let newSize = CGSize(width: newX, height: newY)
+    func updateGrid() {
+        let newSize = ResizeMath.divideSizeForGrid(
+            squareSize: chessBaseNode.size
+        )
         
         nodeGrid.enumerated().forEach { y, row in
             row.enumerated().forEach { x, item in
@@ -118,5 +113,6 @@ class ChessScene: SKScene, ChessSceneInterface  {
             }
         }
     }
-    
+
 }
+
