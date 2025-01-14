@@ -45,15 +45,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         return result
     }()
     
-    private let chessMatrix: [[SKSpriteNode?]] = {
-        //make a factory or something to make this, the logic is a little more obtuse so is better
-        // I need to on the row 0 generate the first row of the black pieces
-        // row 1 all black pawns
-        //row 62 all white pawns
-        //row 63 first row of white pieces
-        
-        return []
-    }()
+    private let chessMatrix: [[ChessPiece?]] = PieceFactory.makeMatrix()
     
     
     override init() {
@@ -82,6 +74,13 @@ class ChessScene: SKScene, ChessSceneInterface  {
             }
             
         }
+        
+        chessMatrix.forEach { row in
+            for item in row {
+                guard let item, item.piece.parent == nil else { continue }
+                chessBaseNode.addChild(item.piece)
+            }
+        }
         updateSize(size)
     }
     
@@ -94,6 +93,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         
         moveChessTableNode(squareSize, size)
         updateGrid()
+        updateChessGrid()
     }
     
         
@@ -123,7 +123,76 @@ extension ChessScene {
                 item.position.y = CGFloat(y) * item.size.height
             }
         }
+        
+        
+    }
+    
+    func updateChessGrid() {
+        let newSize = ResizeMath.divideSizeForGrid(
+            squareSize: chessBaseNode.size
+        )
+        
+        chessMatrix.enumerated().forEach { y, row in
+            for (x, item) in row.enumerated() {
+                guard let item else { continue }
+                let yOffset = Int(Constants.chessRowsColumns) - 1 - y
+                item.piece.size = newSize
+                item.piece.position.x = CGFloat(x) * item.piece.size.width
+                item.piece.position.y = CGFloat(yOffset) * item.piece.size.height
+            }
+        }
     }
 
 }
 
+struct PieceFactory {
+    private init(){}
+    
+    static func getBlackRows() -> [[ChessPiece]] {
+        return genericPieces(color: .black)
+    }
+    
+    static func getWhiteRows() -> [[ChessPiece]] {
+        return genericPieces(color: .white).reversed()
+    }
+    
+    private static func genericPieces(color: ChessColor) -> [[ChessPiece]] {
+        var arr: [[ChessPiece]] = [
+            [],
+            []
+        ]
+
+        arr[0].append(Rook(color: color))
+        arr[0].append(Knight(color: color))
+        arr[0].append(Bishop(color: color))
+        arr[0].append(Queen(color: color))
+        arr[0].append(King(color: color))
+        arr[0].append(Bishop(color: color))
+        arr[0].append(Knight(color: color))
+        arr[0].append(Rook(color: color))
+        
+        for _ in 0..<Int(Constants.chessRowsColumns) {
+            arr[1].append(Pawn(color: color))
+        }
+        
+        return arr
+    }
+    
+    static func makeBlanks() -> [[ChessPiece?]] {
+        let blank = Array<ChessPiece?>(
+            repeating: nil,
+            count: Int(Constants.chessRowsColumns)
+        )
+        return Array<[ChessPiece?]>(
+            repeating: blank,
+            count: Int(Constants.chessRowsColumns) / 2
+        )
+    }
+    
+    static func makeMatrix() -> [[ChessPiece?]] {
+        return getBlackRows() + makeBlanks() + getWhiteRows()
+    }
+    
+    
+    
+}

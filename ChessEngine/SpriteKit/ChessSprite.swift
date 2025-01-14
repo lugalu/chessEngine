@@ -2,21 +2,17 @@
 
 import SpriteKit
 
-enum chessTurn: String {
-    case black
-    case white
-}
+
 
 class ChessSprite: SKSpriteNode {
-    private(set) var piece: ChessPiece?
-    private(set) var chessColor: chessTurn
+    private(set) var chessColor: ChessColor
     
-    init(piece: ChessPiece?, chessColor: chessTurn) {
-        let textureName: String = piece?.name ?? "empty" + "_" + chessColor.rawValue
-        let texture = textureName.contains("empty") ? nil : SKTexture(imageNamed: textureName)
-        self.piece = piece
+    init(pieceName: String, chessColor: ChessColor) {
+        let textureName: String = pieceName + "_" + chessColor.rawValue
+        let texture = SKTexture(imageNamed: textureName)
         self.chessColor = chessColor
         super.init(texture: texture, color: .clear, size: .zero)
+        self.anchorPoint = CGPoint(x: 0, y: 0)
     }
 
     required init?(coder aDecoder: NSCoder) {

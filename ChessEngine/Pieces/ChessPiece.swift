@@ -1,6 +1,12 @@
 //Created by Lugalu on 22/12/24.
 
-import Foundation
+import SpriteKit
+
+enum ChessColor: String {
+    case black
+    case white
+}
+
 
 class ChessPiece {
     var name: String { "Empty" }
@@ -8,9 +14,14 @@ class ChessPiece {
     var moveDistance: Int { 64 }
     var moves: [MoveDirections] { [] }
     var attackDirections: [MoveDirections] { moves }
-
+    var color: ChessColor
+    var piece: SKSpriteNode
     
-    init(){}
+    init(color: ChessColor){
+        self.color = color
+        piece = SKSpriteNode()
+        piece = ChessSprite(pieceName: self.name, chessColor: self.color)
+    }
     
     func onMove() {
         hadFirstMove = true
