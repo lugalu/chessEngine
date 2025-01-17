@@ -21,31 +21,12 @@ class ChessScene: SKScene, ChessSceneInterface  {
     private let chessBaseNode: SKSpriteNode = {
         let node = SKSpriteNode(color: .clear, size: .zero)
         node.anchorPoint = CGPoint(x: 0, y: 0)
-        
         return node
     }()
     
-    private let nodeGrid: [[SKSpriteNode]] = {
-        var arr: [SKSpriteNode] = []
-        
-        for i in 1...Int(Constants.chessRowsColumns) {
-            let color: NSColor = i.isMultiple(of: 2) ? .black : .white
-            let node = SKSpriteNode(color: color, size: .zero)
-            node.anchorPoint = CGPoint(x: 0, y: 0)
-            arr.append(node)
-        }
-        
-        var result: [[SKSpriteNode]] = []
-        for i in 1...Int(Constants.chessRowsColumns) {
-            var arr = arr.map { $0.copy() as! SKSpriteNode }
-            arr = i.isMultiple(of: 2) ? arr : arr.reversed()
-            result.append(arr)
-        }
-        
-        return result
-    }()
-    
+    private let nodeGrid: [[SKSpriteNode]] = NodeFactory.makeMatrix()
     private let chessMatrix: [[ChessPiece?]] = PieceFactory.makeMatrix()
+    
     
     
     override init() {
@@ -96,9 +77,12 @@ class ChessScene: SKScene, ChessSceneInterface  {
         updateChessGrid()
     }
     
-        
+    override func touchesBegan(with event: NSEvent) {
+        nodes(at: event.locationInWindow)
+    }
     
 }
+
 
 //Sizing calculations
 extension ChessScene {
@@ -145,54 +129,26 @@ extension ChessScene {
 
 }
 
-struct PieceFactory {
-    private init(){}
+struct NodeFactory {
+    private init() {}
     
-    static func getBlackRows() -> [[ChessPiece]] {
-        return genericPieces(color: .black)
-    }
-    
-    static func getWhiteRows() -> [[ChessPiece]] {
-        return genericPieces(color: .white).reversed()
-    }
-    
-    private static func genericPieces(color: ChessColor) -> [[ChessPiece]] {
-        var arr: [[ChessPiece]] = [
-            [],
-            []
-        ]
-
-        arr[0].append(Rook(color: color))
-        arr[0].append(Knight(color: color))
-        arr[0].append(Bishop(color: color))
-        arr[0].append(Queen(color: color))
-        arr[0].append(King(color: color))
-        arr[0].append(Bishop(color: color))
-        arr[0].append(Knight(color: color))
-        arr[0].append(Rook(color: color))
+    static func makeMatrix() -> [[SKSpriteNode]] {
+        var arr: [SKSpriteNode] = []
         
-        for _ in 0..<Int(Constants.chessRowsColumns) {
-            arr[1].append(Pawn(color: color))
+        for i in 1...Int(Constants.chessRowsColumns) {
+            let color: NSColor = i.isMultiple(of: 2) ? .black : .white
+            let node = SKSpriteNode(color: color, size: .zero)
+            node.anchorPoint = CGPoint(x: 0, y: 0)
+            arr.append(node)
         }
         
-        return arr
+        var result: [[SKSpriteNode]] = []
+        for i in 1...Int(Constants.chessRowsColumns) {
+            var arr = arr.map { $0.copy() as! SKSpriteNode }
+            arr = i.isMultiple(of: 2) ? arr : arr.reversed()
+            result.append(arr)
+        }
+        
+        return result
     }
-    
-    static func makeBlanks() -> [[ChessPiece?]] {
-        let blank = Array<ChessPiece?>(
-            repeating: nil,
-            count: Int(Constants.chessRowsColumns)
-        )
-        return Array<[ChessPiece?]>(
-            repeating: blank,
-            count: Int(Constants.chessRowsColumns) / 2
-        )
-    }
-    
-    static func makeMatrix() -> [[ChessPiece?]] {
-        return getBlackRows() + makeBlanks() + getWhiteRows()
-    }
-    
-    
-    
 }
