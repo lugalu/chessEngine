@@ -24,7 +24,7 @@ enum MoveDirections: CaseIterable {
     case knightDownLeftTwo
     
     
-    func getMoveTuple() -> (x: Int, y: Int) {
+    func getMoveOffset() -> BoardCoords {
         return switch self {
         case .up: (0, -1)
         case .down: (0, 1)

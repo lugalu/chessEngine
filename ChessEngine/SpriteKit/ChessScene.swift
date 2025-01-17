@@ -33,6 +33,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         super.init(size: .zero)
         addChild(leftMenu)
         addChild(chessBaseNode)
+        self.isUserInteractionEnabled = true
     }
     
     required init?(coder: NSCoder) {
@@ -77,10 +78,36 @@ class ChessScene: SKScene, ChessSceneInterface  {
         updateChessGrid()
     }
     
-    override func touchesBegan(with event: NSEvent) {
-        nodes(at: event.locationInWindow)
+
+    override func mouseDown(with event: NSEvent) {
+        let nodes = nodes(at: event.locationInWindow)
+            .filter({ $0 is SKSpriteNode })
+            .map({ $0 as! SKSpriteNode })
+            .filter({$0.texture != nil})
+        
+        guard let node = nodes.first else { return }
+        let(x,y) = getIndexOfTouch(node: node)
+        
+        guard (0...7).contains(x) && (0...7).contains(y),
+              let piece = chessMatrix[y][x]
+        else {
+            return
+        }
+        
+       
+        let moves = piece.getMoves(currentBoard: chessMatrix)
+        print(moves)
     }
     
+    func getIndexOfTouch(node: SKSpriteNode)-> BoardCoords {
+        let boardSize = chessBaseNode.size
+        let gridSize = ResizeMath.divideSizeForGrid(squareSize: boardSize)
+        let x = Int(node.position.x / gridSize.width)
+        //invert the Y axis since the matrix 0,0 is on the top and on the screen is on the bottom
+        let y = Int((boardSize.height - node.position.y) / gridSize.height) - 1
+        
+        return (x,y)
+    }
 }
 
 

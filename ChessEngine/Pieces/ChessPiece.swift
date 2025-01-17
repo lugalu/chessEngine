@@ -9,6 +9,7 @@ enum ChessColor: String {
 
 typealias BoardCoords = (x: Int, y: Int)
 typealias MoveAttackCondition = ([[ChessPiece?]], BoardCoords) -> Bool
+
 class ChessPiece {
     var name: String { "Empty" }
     private(set) var hadFirstMove: Bool = false
@@ -22,6 +23,7 @@ class ChessPiece {
         self.color = color
         piece = SKSpriteNode()
         piece = ChessSprite(pieceName: self.name, chessColor: self.color)
+        
     }
     
     func onMove() {
@@ -35,6 +37,7 @@ class ChessPiece {
         
         return iterateAndCheck(
             currentBoard: board,
+            toCheck: self.moves,
             resultCondition: condition
         )
     }
@@ -50,6 +53,7 @@ class ChessPiece {
         
         return iterateAndCheck(
             currentBoard: board,
+            toCheck: self.attackDirections,
             resultCondition: condition
         )
     }
@@ -57,24 +61,30 @@ class ChessPiece {
     
     private func iterateAndCheck(
         currentBoard board: [[ChessPiece?]],
+        toCheck moves: [MoveDirections],
         resultCondition condition: MoveAttackCondition) -> [BoardCoords] {
         var result: [BoardCoords] = []
         
-        guard let position = getPosition(from: board) else {
+        guard let position = getPosition(on: board) else {
             fatalError("Selected piece that doesn't exist")
         }
         
-        for attack in attackDirections {
+        for move in moves {
             var currX = position.x
             var currY = position.y
-            let (moveY,moveX) = attack.getMoveTuple()
+            let (moveX,moveY) = move.getMoveOffset()
             
-            for i in 0..<moveDistance {
-                if i >= board.count { break }
+            for _ in 0..<moveDistance {
                 currX += moveX
                 currY += moveY
+
+                let xCanContinue = (0..<board.count).contains(currX)
+                let yCanContinue = (0..<board.count).contains(currY)
                 
-                if !condition(board, (currX,currY)) { break }
+                if !xCanContinue || !yCanContinue,
+                   !condition(board, (currX,currY)) {
+                    break
+                }
                 
                 result.append((currX,currY))
             }
@@ -83,7 +93,7 @@ class ChessPiece {
         return result
     }
     
-    private func getPosition(from board: [[ChessPiece?]]) -> BoardCoords? {
+    private func getPosition(on board: [[ChessPiece?]]) -> BoardCoords? {
         for (y, row) in board.enumerated() {
             guard let x = row.firstIndex(where: { $0 === self }) else {
                 continue

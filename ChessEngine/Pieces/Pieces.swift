@@ -5,9 +5,13 @@ import Foundation
 class Pawn: ChessPiece {
     override var name: String { "Pawn" }
     override var moveDistance: Int { self.hadFirstMove ? 1 : 2 }
-    override var moves: [MoveDirections] { [.up] }
-    override var attackDirections: [MoveDirections] { [.diagonalUpRight,
-                                                       .diagonalUpLeft] }
+    override var moves: [MoveDirections] {
+        self.color == .white ? [.up] : [.down]
+    }
+    override var attackDirections: [MoveDirections] {
+        self.color == .white ? [.diagonalUpRight, .diagonalUpLeft] :
+                               [.diagonalDownRight,.diagonalDownLeft]
+    }
 }
 
 class Rook: ChessPiece {
