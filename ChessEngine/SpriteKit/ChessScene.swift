@@ -96,7 +96,8 @@ class ChessScene: SKScene, ChessSceneInterface  {
         
        
         let moves = piece.getMoves(currentBoard: chessMatrix)
-        print(moves)
+        let attack = piece.getAttack(currentBoard: chessMatrix)
+        print(moves, attack)
     }
     
     func getIndexOfTouch(node: SKSpriteNode)-> BoardCoords {

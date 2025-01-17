@@ -14,6 +14,7 @@ class ChessPiece {
     var name: String { "Empty" }
     private(set) var hadFirstMove: Bool = false
     var moveDistance: Int { 64 }
+    var attackDistance: Int { moveDistance }
     var moves: [MoveDirections] { [] }
     var attackDirections: [MoveDirections] { moves }
     var color: ChessColor
@@ -38,11 +39,12 @@ class ChessPiece {
         return iterateAndCheck(
             currentBoard: board,
             toCheck: self.moves,
+            distance: moveDistance,
             resultCondition: condition
         )
     }
     
-    func getAttack(currentBoard board: [[ChessPiece?]], currentPos position: BoardCoords) -> [BoardCoords] {
+    func getAttack(currentBoard board: [[ChessPiece?]]) -> [BoardCoords] {
         let condition: MoveAttackCondition = { board, pos in
             guard let otherPiece = board[pos.y][pos.x] else{
                 return false
@@ -54,6 +56,7 @@ class ChessPiece {
         return iterateAndCheck(
             currentBoard: board,
             toCheck: self.attackDirections,
+            distance: attackDistance,
             resultCondition: condition
         )
     }
@@ -62,6 +65,7 @@ class ChessPiece {
     private func iterateAndCheck(
         currentBoard board: [[ChessPiece?]],
         toCheck moves: [MoveDirections],
+        distance: Int,
         resultCondition condition: MoveAttackCondition) -> [BoardCoords] {
         var result: [BoardCoords] = []
         
@@ -74,14 +78,14 @@ class ChessPiece {
             var currY = position.y
             let (moveX,moveY) = move.getMoveOffset()
             
-            for _ in 0..<moveDistance {
+            for _ in 0..<distance {
                 currX += moveX
                 currY += moveY
 
                 let xCanContinue = (0..<board.count).contains(currX)
                 let yCanContinue = (0..<board.count).contains(currY)
                 
-                if !xCanContinue || !yCanContinue,
+                if !xCanContinue || !yCanContinue ||
                    !condition(board, (currX,currY)) {
                     break
                 }

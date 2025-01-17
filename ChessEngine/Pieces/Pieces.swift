@@ -5,6 +5,7 @@ import Foundation
 class Pawn: ChessPiece {
     override var name: String { "Pawn" }
     override var moveDistance: Int { self.hadFirstMove ? 1 : 2 }
+    override var attackDistance: Int { 1 }
     override var moves: [MoveDirections] {
         self.color == .white ? [.up] : [.down]
     }
