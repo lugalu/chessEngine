@@ -29,4 +29,8 @@ struct ResizeMath {
         
         return CGSize(width: width, height: height)
     }
+    
+    static func offset(y: Int) -> Int {
+        return Int(Constants.chessRowsColumns) - 1 - y
+    }
 }

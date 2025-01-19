@@ -18,7 +18,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         return node
     }()
     
-    private let chessBaseNode: SKSpriteNode = {
+    private let chessBoard: SKSpriteNode = {
         let node = SKSpriteNode(color: .clear, size: .zero)
         node.anchorPoint = CGPoint(x: 0, y: 0)
         return node
@@ -26,20 +26,23 @@ class ChessScene: SKScene, ChessSceneInterface  {
     
     private let nodeGrid: [[SKSpriteNode]] = NodeFactory.makeMatrix()
     private let chessMatrix: [[ChessPiece?]] = PieceFactory.makeMatrix()
+    private var squarePool: [SKSpriteNode] = NodeFactory.makeSpareSquares()
+    private var inUseSquares: [SKSpriteNode] = []
     
-    
+    private var currentTurn: ChessColor = .white
+    private var didSelectPiece = false
     
     override init() {
         super.init(size: .zero)
         addChild(leftMenu)
-        addChild(chessBaseNode)
+        addChild(chessBoard)
         self.isUserInteractionEnabled = true
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         addChild(leftMenu)
-        addChild(chessBaseNode)
+        addChild(chessBoard)
     }
     
     func configure(whitePlayerName: String = "White", blackPlayerName: String = "Black") {
@@ -47,11 +50,11 @@ class ChessScene: SKScene, ChessSceneInterface  {
             fatalError("NScreen not available")
         }
         
-        chessBaseNode.position = CGPoint(x: leftMenu.size.width, y: 0)
+        chessBoard.position = CGPoint(x: leftMenu.size.width, y: 0)
         if nodeGrid.first!.first!.parent == nil {
             nodeGrid.forEach { row in
                 row.forEach { column in
-                    chessBaseNode.addChild(column)
+                    chessBoard.addChild(column)
                 }
             }
             
@@ -60,7 +63,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         chessMatrix.forEach { row in
             for item in row {
                 guard let item, item.piece.parent == nil else { continue }
-                chessBaseNode.addChild(item.piece)
+                chessBoard.addChild(item.piece)
             }
         }
         updateSize(size)
@@ -71,7 +74,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
         leftMenu.size.height = size.height
         
         let squareSize = ResizeMath.getSquare(from: size)
-        chessBaseNode.size = squareSize
+        chessBoard.size = squareSize
         
         moveChessTableNode(squareSize, size)
         updateGrid()
@@ -80,28 +83,67 @@ class ChessScene: SKScene, ChessSceneInterface  {
     
 
     override func mouseDown(with event: NSEvent) {
-        let nodes = nodes(at: event.locationInWindow)
-            .filter({ $0 is SKSpriteNode })
-            .map({ $0 as! SKSpriteNode })
-            .filter({$0.texture != nil})
+        if didSelectPiece {
+            onSelectedClick(event)
+            return
+        }
+        onNonSelectedClick(event)
+    }
+    
+    func onNonSelectedClick(_ event: NSEvent) {
         
-        guard let node = nodes.first else { return }
+        guard let node = nodes(at: event.locationInWindow).first as? SKSpriteNode , node.texture != nil else { return }
         let(x,y) = getIndexOfTouch(node: node)
         
         guard (0...7).contains(x) && (0...7).contains(y),
-              let piece = chessMatrix[y][x]
-        else {
+              let piece = chessMatrix[y][x],
+              piece.color == currentTurn else {
             return
         }
-        
-       
+        didSelectPiece = true
+
         let moves = piece.getMoves(currentBoard: chessMatrix)
-        let attack = piece.getAttack(currentBoard: chessMatrix)
-        print(moves, attack)
+        let attacks = piece.getAttack(currentBoard: chessMatrix)
+        
+        let boardSize = chessBoard.size
+        let gridSize = ResizeMath.divideSizeForGrid(squareSize: boardSize)
+        
+        for move in moves {
+            let square = squarePool.removeFirst()
+            inUseSquares.append(square)
+            let x = CGFloat(move.x) * gridSize.width
+            let y = CGFloat(ResizeMath.offset(y: move.y)) * gridSize.height
+            
+            square.position = CGPoint(x: x, y: y)
+            square.size = gridSize
+            square.color = .green
+        }
+        
+        for attack in attacks {
+            let x = CGFloat(attack.x) * gridSize.width
+            let y = CGFloat(attack.y) * gridSize.height
+            var square: SKSpriteNode
+            if let t = inUseSquares.filter({ $0.position.x == x && $0.position.y == y }).first {
+                square = t
+            } else {
+                square = squarePool.removeFirst()
+                square.position = CGPoint(x: x, y: y)
+                square.size = gridSize
+                inUseSquares.append(square)
+            }
+            
+            square.color = .red
+        }
+        
+        inUseSquares.forEach{
+            if $0.parent == nil {
+                chessBoard.addChild($0)
+            }
+        }
     }
     
     func getIndexOfTouch(node: SKSpriteNode)-> BoardCoords {
-        let boardSize = chessBaseNode.size
+        let boardSize = chessBoard.size
         let gridSize = ResizeMath.divideSizeForGrid(squareSize: boardSize)
         let x = Int(node.position.x / gridSize.width)
         //invert the Y axis since the matrix 0,0 is on the top and on the screen is on the bottom
@@ -109,13 +151,42 @@ class ChessScene: SKScene, ChessSceneInterface  {
         
         return (x,y)
     }
+    
+    
+    func onSelectedClick(_ event: NSEvent) {
+        didSelectPiece = false
+        
+        let nodes = nodes(at: event.locationInWindow)
+            .filter({ $0 is SKSpriteNode })
+            .map({ $0 as! SKSpriteNode})
+            .filter ({ $0.name == Constants.spareNodeName })
+        
+        guard let node = nodes.first else {
+            removeSpares()
+            return
+        }
+        
+    }
+
+    func removeSpares() {
+        for _ in 0..<inUseSquares.count {
+            let square = inUseSquares.removeFirst()
+            square.removeFromParent()
+            square.color = .clear
+            squarePool.append(square)
+            
+            
+        }
+    }
+    
+
 }
 
 
 //Sizing calculations
 extension ChessScene {
     func moveChessTableNode(_ squareSize: CGSize, _ size: CGSize) {
-        chessBaseNode.position = ResizeMath
+        chessBoard.position = ResizeMath
             .getCenteredPositionForSquare(
                 square: squareSize,
                 screenSize: size,
@@ -125,7 +196,7 @@ extension ChessScene {
     
     func updateGrid() {
         let newSize = ResizeMath.divideSizeForGrid(
-            squareSize: chessBaseNode.size
+            squareSize: chessBoard.size
         )
         
         nodeGrid.enumerated().forEach { y, row in
@@ -141,7 +212,7 @@ extension ChessScene {
     
     func updateChessGrid() {
         let newSize = ResizeMath.divideSizeForGrid(
-            squareSize: chessBaseNode.size
+            squareSize: chessBoard.size
         )
         
         chessMatrix.enumerated().forEach { y, row in
@@ -178,5 +249,18 @@ struct NodeFactory {
         }
         
         return result
+    }
+    
+    
+    static func makeSpareSquares() -> [SKSpriteNode] {
+        var arr: [SKSpriteNode] = []
+        for _ in 0..<30 {
+            let node = SKSpriteNode(color: .clear, size: .zero)
+            node.anchorPoint = CGPoint(x: 0, y: 0)
+            node.name = Constants.spareNodeName
+            arr.append(node)
+        }
+        
+        return arr
     }
 }

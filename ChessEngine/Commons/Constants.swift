@@ -16,4 +16,5 @@ struct Constants {
     }
     
     static public let chessRowsColumns: Double = 8
+    static public let spareNodeName = "Spare"
 }

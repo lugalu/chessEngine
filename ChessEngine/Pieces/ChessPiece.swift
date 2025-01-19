@@ -24,7 +24,6 @@ class ChessPiece {
         self.color = color
         piece = SKSpriteNode()
         piece = ChessSprite(pieceName: self.name, chessColor: self.color)
-        
     }
     
     func onMove() {
