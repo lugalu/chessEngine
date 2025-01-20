@@ -31,20 +31,20 @@ enum MoveDirections: CaseIterable {
         case .left: (-1,0)
         case .right: (1, 0)
             
-        case .diagonalUpRight: (1, 1)
-        case .diagonalUpLeft: (-1, 1)
+        case .diagonalUpRight: (1, -1)
+        case .diagonalUpLeft: (-1, -1)
         case .diagonalDownRight: (1, 1)
-        case .diagonalDownLeft: (1, -1)
+        case .diagonalDownLeft: (-1, 1)
             
-        case .knightUpRightOne: (-2, 1)
-        case .knightUpRightTwo: (-1, 2)
-        case .knightUpLeftOne: (-2, -1)
-        case .knightUpLeftTwo: (-1, -2)
+        case .knightUpRightOne: (1, -2)
+        case .knightUpRightTwo: (2, -1)
+        case .knightUpLeftOne: (-1, -2)
+        case .knightUpLeftTwo: (-2, -1)
             
-        case .knightDownRightOne: (2, 1)
-        case .knightDownRightTwo: (1, 2)
-        case .knightDownLeftOne: (2, -1)
-        case .knightDownLeftTwo: (1, -2)
+        case .knightDownRightOne: (1, 2)
+        case .knightDownRightTwo: (2, 1)
+        case .knightDownLeftOne: (-1, 2)
+        case .knightDownLeftTwo: (-2, 1)
         }
     }
 }

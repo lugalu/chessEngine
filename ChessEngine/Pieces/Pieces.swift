@@ -6,9 +6,10 @@ class Pawn: ChessPiece {
     override var name: String { "Pawn" }
     override var moveDistance: Int { self.hadFirstMove ? 1 : 2 }
     override var attackDistance: Int { 1 }
-    override var moves: [MoveDirections] {
+    override var moveDirections: [MoveDirections] {
         self.color == .white ? [.up] : [.down]
     }
+    
     override var attackDirections: [MoveDirections] {
         self.color == .white ? [.diagonalUpRight, .diagonalUpLeft] :
                                [.diagonalDownRight,.diagonalDownLeft]
@@ -17,7 +18,7 @@ class Pawn: ChessPiece {
 
 class Rook: ChessPiece {
     override var name: String { "Rook" }
-    override var moves: [MoveDirections] { [.up,
+    override var moveDirections: [MoveDirections] { [.up,
                                             .down,
                                             .left,
                                             .right] }
@@ -25,7 +26,7 @@ class Rook: ChessPiece {
 
 class Bishop: ChessPiece {
     override var name: String { "Bishop" }
-    override var moves: [MoveDirections] { [.diagonalUpLeft,
+    override var moveDirections: [MoveDirections] { [.diagonalUpLeft,
                                             .diagonalUpRight,
                                             .diagonalDownLeft,
                                             .diagonalDownRight] }
@@ -33,7 +34,7 @@ class Bishop: ChessPiece {
 
 class Queen: ChessPiece {
     override var name: String { "Queen" }
-    override var moves: [MoveDirections] { [.up,
+    override var moveDirections: [MoveDirections] { [.up,
                                             .down,
                                             .left,
                                             .right,
@@ -46,7 +47,7 @@ class Queen: ChessPiece {
 class King: ChessPiece {
     override var name: String { "King" }
     override var moveDistance: Int { 1 }
-    override var moves: [MoveDirections] { [.up,
+    override var moveDirections: [MoveDirections] { [.up,
                                             .down,
                                             .left,
                                             .right,
@@ -59,7 +60,7 @@ class King: ChessPiece {
 class Knight: ChessPiece {
     override var name: String { "Knight" }
     override var moveDistance: Int { 1 }
-    override var moves: [MoveDirections] { [.knightUpRightOne,
+    override var moveDirections: [MoveDirections] { [.knightUpRightOne,
                                             .knightUpRightTwo,
                                             .knightUpLeftOne,
                                             .knightUpLeftTwo,

@@ -15,64 +15,48 @@ class ChessPiece {
     private(set) var hadFirstMove: Bool = false
     var moveDistance: Int { 64 }
     var attackDistance: Int { moveDistance }
-    var moves: [MoveDirections] { [] }
-    var attackDirections: [MoveDirections] { moves }
+    var moveDirections: [MoveDirections] { [] }
+    var attackDirections: [MoveDirections] { moveDirections }
     var color: ChessColor
     var piece: SKSpriteNode
     
+    private(set) var position: BoardCoords = (0,0)
+    private(set) var currentMoves: [[BoardCoords]] = []
+    private(set) var currentAttack: [[BoardCoords]] = []
+
     init(color: ChessColor){
         self.color = color
         piece = SKSpriteNode()
-        piece = ChessSprite(pieceName: self.name, chessColor: self.color)
-    }
-    
-    func onMove() {
-        hadFirstMove = true
-    }
-    
-    func getMoves(currentBoard board: [[ChessPiece?]]) -> [BoardCoords] {
-        let condition: MoveAttackCondition = { board, pos in
-            board[pos.y][pos.x] == nil
-        }
         
-        return iterateAndCheck(
-            currentBoard: board,
-            toCheck: self.moves,
-            distance: moveDistance,
-            resultCondition: condition
+        piece = ChessSprite(
+            pieceName: self.name,
+            chessColor: self.color,
+            piece: self
+        )
+        
+        
+
+    }
+    
+    func calculatePosition(forNewPosition: BoardCoords) {
+        self.position = forNewPosition
+        self.currentMoves = calculatePositions(
+            check: moveDirections,
+            distance: moveDistance
+        )
+        self.currentAttack = calculatePositions(
+            check: attackDirections,
+            distance: attackDistance
         )
     }
     
-    func getAttack(currentBoard board: [[ChessPiece?]]) -> [BoardCoords] {
-        let condition: MoveAttackCondition = { board, pos in
-            guard let otherPiece = board[pos.y][pos.x] else{
-                return false
-            }
-            
-            return otherPiece.color != self.color
-        }
-        
-        return iterateAndCheck(
-            currentBoard: board,
-            toCheck: self.attackDirections,
-            distance: attackDistance,
-            resultCondition: condition
-        )
-    }
-    
-    
-    private func iterateAndCheck(
-        currentBoard board: [[ChessPiece?]],
-        toCheck moves: [MoveDirections],
-        distance: Int,
-        resultCondition condition: MoveAttackCondition) -> [BoardCoords] {
-        var result: [BoardCoords] = []
-        
-        guard let position = getPosition(on: board) else {
-            fatalError("Selected piece that doesn't exist")
-        }
+    private func calculatePositions(check moves: [MoveDirections],
+                                 distance: Int) -> [[BoardCoords]] {
+        var result: [[BoardCoords]] = []
+        let boardSize = Int(Constants.chessRowsColumns)
         
         for move in moves {
+            var currentMoves: [BoardCoords] = []
             var currX = position.x
             var currY = position.y
             let (moveX,moveY) = move.getMoveOffset()
@@ -81,29 +65,30 @@ class ChessPiece {
                 currX += moveX
                 currY += moveY
 
-                let xCanContinue = (0..<board.count).contains(currX)
-                let yCanContinue = (0..<board.count).contains(currY)
+                let xCanContinue = (0..<boardSize).contains(currX)
+                let yCanContinue = (0..<boardSize).contains(currY)
                 
-                if !xCanContinue || !yCanContinue ||
-                   !condition(board, (currX,currY)) {
+                if !xCanContinue || !yCanContinue {
                     break
                 }
                 
-                result.append((currX,currY))
+                currentMoves.append((currX,currY))
             }
+            
+            guard !currentMoves.isEmpty else { continue }
+            result.append(currentMoves)
         }
         
         return result
     }
     
-    private func getPosition(on board: [[ChessPiece?]]) -> BoardCoords? {
-        for (y, row) in board.enumerated() {
-            guard let x = row.firstIndex(where: { $0 === self }) else {
-                continue
-            }
-            return (x,y)
-        }
-        return nil
+    func onMove(newPosition pos: BoardCoords, delegate: ChessSceneInterface ) {
+        hadFirstMove = true
+        calculatePosition(forNewPosition: pos)
+        
     }
+    
+    
+
 }
 

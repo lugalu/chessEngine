@@ -5,6 +5,7 @@ import SpriteKit
 protocol ChessSceneInterface: SKScene {
     func updateSize(_ size: CGSize)
     func configure(whitePlayerName: String, blackPlayerName: String)
+    func addGhost(color: ChessColor, position: BoardCoords)
 }
 
 class ChessScene: SKScene, ChessSceneInterface  {
@@ -25,12 +26,18 @@ class ChessScene: SKScene, ChessSceneInterface  {
     }()
     
     private let nodeGrid: [[SKSpriteNode]] = NodeFactory.makeMatrix()
-    private let chessMatrix: [[ChessPiece?]] = PieceFactory.makeMatrix()
-    private var squarePool: [SKSpriteNode] = NodeFactory.makeSpareSquares()
-    private var inUseSquares: [SKSpriteNode] = []
+    private var chessMatrix: [[ChessPiece?]] = PieceFactory.makeMatrix()
+    
+    private lazy var squarePool: [InteractiveTile] = {
+        let nodes = NodeFactory.makeSpareSquares()
+        nodes.forEach{ chessBoard.addChild($0) }
+        return nodes
+    }()
+    
+    private var inUseSquares: [InteractiveTile] = []
     
     private var currentTurn: ChessColor = .white
-    private var didSelectPiece = false
+    private var selectedPiece: ChessPiece? = nil
     
     override init() {
         super.init(size: .zero)
@@ -83,7 +90,7 @@ class ChessScene: SKScene, ChessSceneInterface  {
     
 
     override func mouseDown(with event: NSEvent) {
-        if didSelectPiece {
+        if selectedPiece != nil {
             onSelectedClick(event)
             return
         }
@@ -92,91 +99,99 @@ class ChessScene: SKScene, ChessSceneInterface  {
     
     func onNonSelectedClick(_ event: NSEvent) {
         
-        guard let node = nodes(at: event.locationInWindow).first as? SKSpriteNode , node.texture != nil else { return }
-        let(x,y) = getIndexOfTouch(node: node)
-        
-        guard (0...7).contains(x) && (0...7).contains(y),
-              let piece = chessMatrix[y][x],
+        guard let node = nodes(at: event.locationInWindow).first as? ChessSprite,
+              let piece = node.piece,
               piece.color == currentTurn else {
             return
         }
-        didSelectPiece = true
+        
+        selectedPiece = piece
 
-        let moves = piece.getMoves(currentBoard: chessMatrix)
-        let attacks = piece.getAttack(currentBoard: chessMatrix)
+        let moves = piece.currentMoves
+        let attacks = piece.currentAttack
         
         let boardSize = chessBoard.size
         let gridSize = ResizeMath.divideSizeForGrid(squareSize: boardSize)
         
-        for move in moves {
-            let square = squarePool.removeFirst()
-            inUseSquares.append(square)
-            let x = CGFloat(move.x) * gridSize.width
-            let y = CGFloat(ResizeMath.offset(y: move.y)) * gridSize.height
-            
-            square.position = CGPoint(x: x, y: y)
-            square.size = gridSize
-            square.color = .green
-        }
-        
-        for attack in attacks {
-            let x = CGFloat(attack.x) * gridSize.width
-            let y = CGFloat(attack.y) * gridSize.height
-            var square: SKSpriteNode
-            if let t = inUseSquares.filter({ $0.position.x == x && $0.position.y == y }).first {
-                square = t
-            } else {
-                square = squarePool.removeFirst()
+        for row in moves {
+            for move in row {
+                guard chessMatrix[move.y][move.x] == nil else { break }
+                let square = squarePool.removeFirst()
+                inUseSquares.append(square)
+                let x = CGFloat(move.x) * gridSize.width
+                let y = CGFloat(ResizeMath.offset(y: move.y)) * gridSize.height
+                
                 square.position = CGPoint(x: x, y: y)
                 square.size = gridSize
-                inUseSquares.append(square)
-            }
-            
-            square.color = .red
-        }
-        
-        inUseSquares.forEach{
-            if $0.parent == nil {
-                chessBoard.addChild($0)
+                square.color = .green
+                square.boardPosition = move
             }
         }
-    }
-    
-    func getIndexOfTouch(node: SKSpriteNode)-> BoardCoords {
-        let boardSize = chessBoard.size
-        let gridSize = ResizeMath.divideSizeForGrid(squareSize: boardSize)
-        let x = Int(node.position.x / gridSize.width)
-        //invert the Y axis since the matrix 0,0 is on the top and on the screen is on the bottom
-        let y = Int((boardSize.height - node.position.y) / gridSize.height) - 1
         
-        return (x,y)
+        for row in attacks {
+            for attack in row {
+                guard let otherPiece = chessMatrix[attack.y][attack.x] else {
+                    continue
+                }
+                guard otherPiece.color != currentTurn else { break }
+                let x = CGFloat(attack.x) * gridSize.width
+                let y = CGFloat(ResizeMath.offset(y: attack.y)) * gridSize.height
+                var square: InteractiveTile
+                if let t = inUseSquares.filter({ $0.position.x == x && $0.position.y == y }).first {
+                    square = t
+                } else {
+                    square = squarePool.removeFirst()
+                    square.position = CGPoint(x: x, y: y)
+                    square.size = gridSize
+                    square.boardPosition = attack
+                    inUseSquares.append(square)
+                }
+                
+                square.color = .red
+                break
+            }
+        }
+        
     }
     
+
     
     func onSelectedClick(_ event: NSEvent) {
-        didSelectPiece = false
-        
+        defer {
+            selectedPiece = nil
+            removeSpares()
+        }
         let nodes = nodes(at: event.locationInWindow)
-            .filter({ $0 is SKSpriteNode })
-            .map({ $0 as! SKSpriteNode})
-            .filter ({ $0.name == Constants.spareNodeName })
+            .filter({ $0 is InteractiveTile })
+            .map({ $0 as! InteractiveTile})
         
         guard let node = nodes.first else {
-            removeSpares()
             return
         }
+        let oldPos = selectedPiece!.position
+        let newPos = node.boardPosition
+        chessMatrix[oldPos.y][oldPos.x] = nil
+        chessMatrix[newPos.y][newPos.x] = selectedPiece
         
+        selectedPiece?.onMove(newPosition: node.boardPosition, delegate: self)
+        selectedPiece?.piece.position = node.position
+        
+        currentTurn = currentTurn == .white ? .black : .white
     }
 
     func removeSpares() {
         for _ in 0..<inUseSquares.count {
             let square = inUseSquares.removeFirst()
-            square.removeFromParent()
             square.color = .clear
+            square.position = CGPoint(x: 0, y: -500)
             squarePool.append(square)
             
             
         }
+    }
+    
+    func addGhost(color: ChessColor, position: BoardCoords) {
+        print("blebleble!")
     }
     
 
@@ -228,39 +243,4 @@ extension ChessScene {
 
 }
 
-struct NodeFactory {
-    private init() {}
-    
-    static func makeMatrix() -> [[SKSpriteNode]] {
-        var arr: [SKSpriteNode] = []
-        
-        for i in 1...Int(Constants.chessRowsColumns) {
-            let color: NSColor = i.isMultiple(of: 2) ? .black : .white
-            let node = SKSpriteNode(color: color, size: .zero)
-            node.anchorPoint = CGPoint(x: 0, y: 0)
-            arr.append(node)
-        }
-        
-        var result: [[SKSpriteNode]] = []
-        for i in 1...Int(Constants.chessRowsColumns) {
-            var arr = arr.map { $0.copy() as! SKSpriteNode }
-            arr = i.isMultiple(of: 2) ? arr : arr.reversed()
-            result.append(arr)
-        }
-        
-        return result
-    }
-    
-    
-    static func makeSpareSquares() -> [SKSpriteNode] {
-        var arr: [SKSpriteNode] = []
-        for _ in 0..<30 {
-            let node = SKSpriteNode(color: .clear, size: .zero)
-            node.anchorPoint = CGPoint(x: 0, y: 0)
-            node.name = Constants.spareNodeName
-            arr.append(node)
-        }
-        
-        return arr
-    }
-}
+

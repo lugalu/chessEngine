@@ -47,7 +47,15 @@ struct PieceFactory {
     }
     
     static func makeMatrix() -> [[ChessPiece?]] {
-        return getBlackRows() + makeBlanks() + getWhiteRows()
+        let result = getBlackRows() + makeBlanks() + getWhiteRows()
+        
+        for (y, row) in result.enumerated() {
+            for (x, item) in row.enumerated(){
+                item?.calculatePosition(forNewPosition: (x,y))
+            }
+        }
+        
+        return result
     }
     
     
