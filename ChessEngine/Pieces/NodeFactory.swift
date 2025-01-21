@@ -32,6 +32,7 @@ struct NodeFactory {
             let node = InteractiveTile(color: .clear, size: .zero)
             node.anchorPoint = CGPoint(x: 0, y: 0)
             node.position = CGPoint(x: 0, y: -500)
+            node.alpha = 0.5
             arr.append(node)
         }
         

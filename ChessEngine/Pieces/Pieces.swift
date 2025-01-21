@@ -14,6 +14,15 @@ class Pawn: ChessPiece {
         self.color == .white ? [.diagonalUpRight, .diagonalUpLeft] :
                                [.diagonalDownRight,.diagonalDownLeft]
     }
+    
+    override func onMove(newPosition pos: BoardCoords, delegate: any ChessSceneInterface) {
+        if !hadFirstMove && abs(pos.y - self.position.y) > 1 {
+            let y = pos.y - (color == .white ? -1 : 1)
+            let ghost = Ghost(color: color, pawn: self, position: (pos.x, y))
+            delegate.addGhost(ghost: ghost)
+        }
+        super.onMove(newPosition: pos, delegate: delegate)
+    }
 }
 
 class Rook: ChessPiece {
@@ -47,6 +56,7 @@ class Queen: ChessPiece {
 class King: ChessPiece {
     override var name: String { "King" }
     override var moveDistance: Int { 1 }
+
     override var moveDirections: [MoveDirections] { [.up,
                                             .down,
                                             .left,
@@ -55,6 +65,9 @@ class King: ChessPiece {
                                             .diagonalUpRight,
                                             .diagonalDownLeft,
                                             .diagonalDownRight] }
+    
+    override var attackDistance: Int { 0 }
+    override var attackDirections: [MoveDirections] { [] }
 }
 
 class Knight: ChessPiece {
@@ -68,4 +81,20 @@ class Knight: ChessPiece {
                                             .knightDownRightTwo,
                                             .knightDownLeftOne,
                                             .knightDownLeftTwo] }
+}
+
+class Ghost: Pawn {
+    override var attackDirections: [MoveDirections] { [] }
+    override var moveDistance: Int { 0 }
+    override var moveDirections: [MoveDirections] { [] }
+    override var attackDistance: Int { 0 }
+    
+    var reference: Pawn
+    
+    init(color: ChessColor, pawn: Pawn, position: BoardCoords) {
+        self.reference = pawn
+        super.init(color: color)
+        self.position = position
+        self.piece.alpha = 0.5
+    }
 }

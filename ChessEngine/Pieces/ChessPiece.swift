@@ -20,7 +20,7 @@ class ChessPiece {
     var color: ChessColor
     var piece: SKSpriteNode
     
-    private(set) var position: BoardCoords = (0,0)
+    var position: BoardCoords = (0,0)
     private(set) var currentMoves: [[BoardCoords]] = []
     private(set) var currentAttack: [[BoardCoords]] = []
 
