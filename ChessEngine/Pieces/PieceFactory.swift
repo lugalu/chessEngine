@@ -51,6 +51,7 @@ struct PieceFactory {
         
         for (y, row) in result.enumerated() {
             for (x, item) in row.enumerated(){
+                item?.sprite.zPosition = 1
                 item?.calculatePosition(forNewPosition: (x,y))
             }
         }

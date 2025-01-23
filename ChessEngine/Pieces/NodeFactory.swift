@@ -12,6 +12,7 @@ struct NodeFactory {
             let color: NSColor = i.isMultiple(of: 2) ? .black : .white
             let node = SKSpriteNode(color: color, size: .zero)
             node.anchorPoint = CGPoint(x: 0, y: 0)
+            node.zPosition = 0
             arr.append(node)
         }
         

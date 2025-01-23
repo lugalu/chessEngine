@@ -15,7 +15,9 @@ class Pawn: ChessPiece {
                                [.diagonalDownRight,.diagonalDownLeft]
     }
     
-    override func onMove(newPosition pos: BoardCoords, delegate: any ChessSceneInterface) {
+    override func onMove(
+        newPosition pos: BoardCoords,
+        delegate: any ChessBoard.Interface) {
         if !hadFirstMove && abs(pos.y - self.position.y) > 1 {
             let y = pos.y - (color == .white ? -1 : 1)
             let ghost = Ghost(color: color, pawn: self, position: (pos.x, y))
@@ -95,6 +97,6 @@ class Ghost: Pawn {
         self.reference = pawn
         super.init(color: color)
         self.position = position
-        self.piece.alpha = 0.5
+        self.sprite.alpha = 0.5
     }
 }

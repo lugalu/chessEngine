@@ -18,7 +18,7 @@ class ChessPiece {
     var moveDirections: [MoveDirections] { [] }
     var attackDirections: [MoveDirections] { moveDirections }
     var color: ChessColor
-    var piece: SKSpriteNode
+    var sprite: SKSpriteNode
     
     var position: BoardCoords = (0,0)
     private(set) var currentMoves: [[BoardCoords]] = []
@@ -26,16 +26,13 @@ class ChessPiece {
 
     init(color: ChessColor){
         self.color = color
-        piece = SKSpriteNode()
+        sprite = SKSpriteNode()
         
-        piece = ChessSprite(
+        sprite = ChessSprite(
             pieceName: self.name,
             chessColor: self.color,
             piece: self
         )
-        
-        
-
     }
     
     func calculatePosition(forNewPosition: BoardCoords) {
@@ -82,7 +79,7 @@ class ChessPiece {
         return result
     }
     
-    func onMove(newPosition pos: BoardCoords, delegate: ChessSceneInterface ) {
+    func onMove(newPosition pos: BoardCoords, delegate: ChessBoard.Interface ) {
         hadFirstMove = true
         calculatePosition(forNewPosition: pos)
         
