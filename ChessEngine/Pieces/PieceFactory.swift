@@ -5,6 +5,17 @@ import SpriteKit
 struct PieceFactory {
     private init(){}
     
+	static func getSingles(withColor color: ChessColor) -> [ChessPiece] {
+		var arr: [ChessPiece] = []
+		
+		arr.append(Rook(color: color))
+		arr.append(Knight(color: color))
+		arr.append(Bishop(color: color))
+		arr.append(Queen(color: color))
+		
+		return arr
+	}
+	
     static func getBlackRows() -> [[ChessPiece]] {
         return genericPieces(color: .black)
     }
