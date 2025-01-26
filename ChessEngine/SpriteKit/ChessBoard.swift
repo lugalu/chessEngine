@@ -210,7 +210,21 @@ extension ChessBoard {
 	func changeTurn() {
 		removeTurnGhosts()
 		//TODO: Analyze for Check and Checkmate
+		let kings = chessMatrix.flatMap {
+			
+			$0.filter({
+				guard let piece = $0 else { return false }
+				return piece is King
+			}).compactMap({ $0 })
+		}
 		
+		guard let whiteKing = kings.filter({ $0.color == .white }).first,
+			  let blackKing = kings.filter({ $0.color == .black }).first else {
+			fatalError()
+		}
+		
+		let whiteResult = analyse(king: whiteKing)
+		let blackResult = analyse(king: blackKing)
 		
 		currentTurn = currentTurn == .white ? .black : .white
 	}
@@ -247,6 +261,80 @@ extension ChessBoard {
 		piece.onMove(newPosition: upgradePos, delegate: self)
 		oldNode.sprite.removeFromParent()
 		self.upgradePos = nil
+	}
+	
+	enum KingFlag {
+		case safe
+		case onCheck
+		case checkMate
+	}
+	func analyse(king: ChessPiece) -> KingFlag {
+		guard king is King else {
+			fatalError("Supplied Piece is not a King, developer error")
+		}
+		
+		let enemies = chessMatrix.flatMap({
+			$0.filter {
+				guard let piece = $0 else { return false }
+				return piece.color != king.color
+			}
+			.compactMap{ $0 }
+		})
+		
+		var directAttacks = enemies.filter {
+			let temp = $0.currentAttack.filter {
+				$0.contains(where: { (x,y) in
+					king.position.x == x && king.position.y == y
+				})
+			}
+			
+			return !temp.isEmpty
+		}
+		
+		pieceLoop: for pieces in directAttacks {
+			for dir in pieces.currentAttack {
+				let hasKing = dir.contains( where: {
+					$0.x == king.position.x && $0.y == king.position.y
+				})
+	
+				if !hasKing { continue }
+				
+				for position in dir {
+					let (x,y) = position
+					guard let other = chessMatrix[y][x] else { continue }
+					
+					if other === king {
+						continue pieceLoop
+					}
+					else {
+						break
+					}
+					
+				}
+			}
+			
+			directAttacks.removeFirst()
+		}
+		
+		if directAttacks.isEmpty {
+			return .safe
+		}
+		
+		
+		/*
+		 - 1 Unreachable
+		 0 under Attack
+		 1 safe
+		 3 King
+		 */
+		var matrix: [[Int]] = [
+			[-1,-1,-1],
+			[-1,3,-1],
+			[-1,-1,-1]
+		]
+		
+		
+		return .safe
 	}
 }
 
