@@ -181,7 +181,7 @@ extension ChessBoard {
 			delegate?.displaySelectionMenu()
 			return
 		}
-
+		
 		changeTurn()
 		
 	}
@@ -208,7 +208,6 @@ extension ChessBoard {
 	}
 	
 	func changeTurn() {
-		removeTurnGhosts()
 		//TODO: Analyze for Check and Checkmate
 		let kings = chessMatrix.flatMap {
 			
@@ -223,10 +222,11 @@ extension ChessBoard {
 			fatalError()
 		}
 		
-		let whiteResult = analyse(king: whiteKing)
-		let blackResult = analyse(king: blackKing)
-		
+		let _ = analyse(king: whiteKing)
+		let _ = analyse(king: blackKing)
+
 		currentTurn = currentTurn == .white ? .black : .white
+		removeTurnGhosts()
 	}
 	
 	func removeTurnGhosts() {
@@ -248,7 +248,7 @@ extension ChessBoard {
 	
 	func upgradePawn(with piece: ChessPiece) {
 		guard let upgradePos,
-		let oldNode = chessMatrix[upgradePos.y][upgradePos.x]
+			  let oldNode = chessMatrix[upgradePos.y][upgradePos.x]
 		else { return }
 		addChild(piece.sprite)
 		chessMatrix[upgradePos.y][upgradePos.x] = piece
@@ -291,12 +291,16 @@ extension ChessBoard {
 			return !temp.isEmpty
 		}
 		
+		if directAttacks.isEmpty {
+			return .safe
+		}
+		
 		pieceLoop: for pieces in directAttacks {
 			for dir in pieces.currentAttack {
 				let hasKing = dir.contains( where: {
 					$0.x == king.position.x && $0.y == king.position.y
 				})
-	
+				
 				if !hasKing { continue }
 				
 				for position in dir {
@@ -315,6 +319,7 @@ extension ChessBoard {
 			
 			directAttacks.removeFirst()
 		}
+		
 		
 		if directAttacks.isEmpty {
 			return .safe
