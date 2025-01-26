@@ -85,6 +85,9 @@ class ChessPiece {
         
     }
     
+	func canUpgrade() -> Bool {
+		return false
+	}
     
 
 }

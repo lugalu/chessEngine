@@ -25,6 +25,10 @@ class Pawn: ChessPiece {
         }
         super.onMove(newPosition: pos, delegate: delegate)
     }
+	
+	override func canUpgrade() -> Bool {
+		return position.y == (color == .white ? 0 : 7)
+	}
 }
 
 class Rook: ChessPiece {

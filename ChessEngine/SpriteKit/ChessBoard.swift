@@ -176,8 +176,7 @@ extension ChessBoard {
 		selectedPiece.onMove(newPosition: node.boardPosition, delegate: self)
 		selectedPiece.sprite.position = node.position
 		
-		if selectedPiece is Pawn,
-		   checkIfShouldUpgrade(pieceColor: selectedPiece.color,pos: newPos) {
+		if selectedPiece.canUpgrade() {
 			upgradePos = newPos
 			delegate?.displaySelectionMenu()
 			return
@@ -208,14 +207,12 @@ extension ChessBoard {
 		}
 	}
 	
-	func checkIfShouldUpgrade(pieceColor color: ChessColor,pos: BoardCoords) -> Bool {
-		return pos.y == (color == .white ? 0 : 7)
-	}
-	
 	func changeTurn() {
-		currentTurn = currentTurn == .white ? .black : .white
 		removeTurnGhosts()
 		//TODO: Analyze for Check and Checkmate
+		
+		
+		currentTurn = currentTurn == .white ? .black : .white
 	}
 	
 	func removeTurnGhosts() {
