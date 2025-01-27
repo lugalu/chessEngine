@@ -5,6 +5,10 @@ import SpriteKit
 enum ChessColor: String {
     case black
     case white
+	
+	func inverted() -> ChessColor {
+		return self == .white ? .black : .white
+	}
 }
 
 typealias BoardCoords = (x: Int, y: Int)

@@ -225,7 +225,7 @@ extension ChessBoard {
 		let _ = analyse(king: whiteKing)
 		let _ = analyse(king: blackKing)
 
-		currentTurn = currentTurn == .white ? .black : .white
+		currentTurn = currentTurn.inverted()
 		removeTurnGhosts()
 	}
 	
@@ -267,47 +267,44 @@ extension ChessBoard {
 		case safe
 		case onCheck
 		case checkMate
+		case noValidMoves
 	}
-	func analyse(king: ChessPiece) -> KingFlag {
-		guard king is King else {
-			fatalError("Supplied Piece is not a King, developer error")
-		}
-		
-		let enemies = chessMatrix.flatMap({
+	
+	func getPieces(withColor color: ChessColor) -> [ChessPiece] {
+		return chessMatrix.flatMap({
 			$0.filter {
 				guard let piece = $0 else { return false }
-				return piece.color != king.color
+				return piece.color == color
 			}
 			.compactMap{ $0 }
 		})
-		
+	}
+	
+	func filterValidAttacks(enemies: [ChessPiece], attacked: ChessPiece) -> [ChessPiece] {
 		var directAttacks = enemies.filter {
 			let temp = $0.currentAttack.filter {
-				$0.contains(where: { (x,y) in
-					king.position.x == x && king.position.y == y
+				$0.contains(where: {
+					attacked.position == $0
 				})
 			}
 			
 			return !temp.isEmpty
 		}
 		
-		if directAttacks.isEmpty {
-			return .safe
-		}
 		
 		pieceLoop: for pieces in directAttacks {
 			for dir in pieces.currentAttack {
-				let hasKing = dir.contains( where: {
-					$0.x == king.position.x && $0.y == king.position.y
+				let hasAttacked = dir.contains( where: {
+					$0 == attacked.position
 				})
 				
-				if !hasKing { continue }
+				if !hasAttacked { continue }
 				
 				for position in dir {
 					let (x,y) = position
 					guard let other = chessMatrix[y][x] else { continue }
 					
-					if other === king {
+					if other === attacked {
 						continue pieceLoop
 					}
 					else {
@@ -320,26 +317,114 @@ extension ChessBoard {
 			directAttacks.removeFirst()
 		}
 		
+		return directAttacks
+	}
+	
+	
+	func analyse(king: ChessPiece) -> KingFlag {
+		guard king is King else {
+			fatalError("Supplied Piece is not a King, developer error")
+		}
+		print("king is \(king.color)")
+		let allies = getPieces(withColor: king.color)
+		let enemies = getPieces(withColor: king.color.inverted())
+		var directAttacks = filterValidAttacks(enemies: enemies, attacked: king)
 		
-		if directAttacks.isEmpty {
+		for directAttack in directAttacks{
+			for ally in allies {
+				if canAttackReach(
+					position: directAttack.position,
+					withPiece: ally
+				) {
+					directAttacks.removeAll(where: { $0 === directAttack })
+				}
+			}
+		}
+	
+		
+		var kingMatrix = king.currentAttack
+			.filter({ row in
+				!row.filter({ (x,y) in
+					chessMatrix[y][x] == nil
+				}).isEmpty
+			})
+			.map{ $0.map({ (0, $0) })}
+		
+		for (y,row) in kingMatrix.enumerated() {
+			for (x,(_, pos)) in row.enumerated() {
+				enemies.forEach {
+					if canAttackReach(position: pos, withPiece: $0) {
+						kingMatrix[y][x].0 += 1
+					}
+				}
+			}
+		}
+		
+		autoreleasepool{
+			for (y,row) in kingMatrix.enumerated() {
+				for (x,(_, pos)) in row.enumerated() {
+					let filtered = enemies.filter {
+						$0.position == pos
+					}
+					guard !filtered.isEmpty else { continue }
+					let copy = enemies.filter({ curr in
+						!filtered.contains(where: { $0.position == curr.position })
+					})
+					filteredEnemies: for enemy in filtered {
+						var reached = false
+						for others in copy {
+							if canAttackReach(
+								position: enemy.position,
+								withPiece: others
+							) {
+								reached = true
+								break
+							}
+						}
+						if reached { continue }
+						kingMatrix[y][x].0 = 0
+					}
+				}
+			}
+		}
+		
+		let hasValidMove = kingMatrix.contains(where: {
+			$0.contains(where: { $0.0 == 0 })
+		})
+		
+		if hasValidMove && !directAttacks.isEmpty {
+			return .onCheck
+		}
+		
+		if !hasValidMove && !directAttacks.isEmpty {
+			return .checkMate
+		}
+		
+		if !hasValidMove || directAttacks.isEmpty {
 			return .safe
 		}
 		
 		
-		/*
-		 - 1 Unreachable
-		 0 under Attack
-		 1 safe
-		 3 King
-		 */
-		var matrix: [[Int]] = [
-			[-1,-1,-1],
-			[-1,3,-1],
-			[-1,-1,-1]
-		]
+		return .noValidMoves
+	}
+	
+	func canAttackReach(position: BoardCoords, withPiece piece: ChessPiece ) -> Bool {
+		for attack in piece.currentAttack {
+			guard attack
+				.contains(where: {
+					$0 == position
+				}) else { continue }
+			
+			for (x,y) in attack {
+				guard let other = chessMatrix[y][x] else { continue }
+				
+				if other.position == position {
+					return true
+				}
+			}
+		}
 		
-		
-		return .safe
+		return false
 	}
 }
 

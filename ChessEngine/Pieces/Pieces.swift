@@ -72,8 +72,7 @@ class King: ChessPiece {
                                             .diagonalDownLeft,
                                             .diagonalDownRight] }
     
-    override var attackDistance: Int { 0 }
-    override var attackDirections: [MoveDirections] { [] }
+
 }
 
 class Knight: ChessPiece {
