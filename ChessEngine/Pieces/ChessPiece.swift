@@ -26,7 +26,7 @@ class ChessPiece {
     
     var position: BoardCoords = (0,0)
     private(set) var currentMoves: [[BoardCoords]] = []
-    private(set) var currentAttack: [[BoardCoords]] = []
+    private(set) var currentAttacks: [[BoardCoords]] = []
 
     init(color: ChessColor){
         self.color = color
@@ -45,7 +45,7 @@ class ChessPiece {
             check: moveDirections,
             distance: moveDistance
         )
-        self.currentAttack = calculatePositions(
+        self.currentAttacks = calculatePositions(
             check: attackDirections,
             distance: attackDistance
         )

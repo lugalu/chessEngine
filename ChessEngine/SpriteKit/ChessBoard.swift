@@ -100,51 +100,65 @@ extension ChessBoard {
 		
 		selectedPiece = piece
 		
-		let moves = piece.currentMoves
-		let attacks = piece.currentAttack
+		let moves = getValidMoves(for: piece)
+		let attacks = getValidAttacks(for: piece)
+		makeSquares(positions: moves, type: .move)
+		makeSquares(positions: attacks, type: .attack)
 		
-		let gridSize = ResizeMath.divideSizeForGrid(squareSize: size)
-		
-		for row in moves {
-			for move in row {
-				guard chessMatrix[move.y][move.x] == nil else { break }
-				let square = squarePool.removeFirst()
-				inUseSquares.append(square)
-				let x = CGFloat(move.x) * gridSize.width
-				let y = CGFloat(ResizeMath.offset(y: move.y)) * gridSize.height
-				
-				square.position = CGPoint(x: x, y: y)
-				square.size = gridSize
-				square.color = .green
-				square.type = .move
-				square.boardPosition = move
+	}
+	
+	func getValidMoves(for piece: ChessPiece) -> [BoardCoords] {
+		var moves = piece.currentMoves
+		for (rowIdx, row) in moves.enumerated() {
+			for (idx, (x, y)) in row.enumerated() {
+				guard chessMatrix[y][x] == nil else {
+					moves[rowIdx].removeLast(moves[rowIdx].count - idx)
+					break
+				}
 			}
 		}
 		
+		return moves.flatMap({ $0 })
+	}
+	
+	func getValidAttacks( for piece: ChessPiece) -> [BoardCoords] {
+		let attacks = piece.currentAttacks
+		var result: [BoardCoords] = []
 		for row in attacks {
-			for attack in row {
-				guard let otherPiece = chessMatrix[attack.y][attack.x] else {
+			for (x, y) in row {
+				guard let otherPiece = chessMatrix[y][x] else {
 					continue
 				}
-				guard otherPiece.color != currentTurn else { break }
-				let x = CGFloat(attack.x) * gridSize.width
-				let y = CGFloat(ResizeMath.offset(y: attack.y)) * gridSize.height
-				var square: InteractiveTile
-				if let t = inUseSquares.filter({ $0.position.x == x && $0.position.y == y }).first {
-					square = t
-				} else {
-					square = squarePool.removeFirst()
-					square.position = CGPoint(x: x, y: y)
-					square.size = gridSize
-					square.boardPosition = attack
-					inUseSquares.append(square)
+				guard otherPiece.color != piece.color else {
+					break
 				}
-				square.type = .attack
-				square.color = .red
+				result.append((x,y))
 				break
 			}
 		}
 		
+		return result
+	}
+	
+	func makeSquares(positions: [BoardCoords], type: TileType) {
+		let gridSize = ResizeMath.divideSizeForGrid(squareSize: size)
+		
+		for position in positions {
+			let x = CGFloat(position.x) * gridSize.width
+			let y = CGFloat(ResizeMath.offset(y: position.y)) * gridSize.height
+			var square: InteractiveTile
+			if let t = inUseSquares.filter({ $0.position.x == x && $0.position.y == y }).first {
+				square = t
+			} else {
+				square = squarePool.removeFirst()
+				square.position = CGPoint(x: x, y: y)
+				square.size = gridSize
+				square.boardPosition = position
+				inUseSquares.append(square)
+			}
+			square.type = type
+			square.color = type.getColor()
+		}
 	}
 	
 	
@@ -208,7 +222,6 @@ extension ChessBoard {
 	}
 	
 	func changeTurn() {
-		//TODO: Analyze for Check and Checkmate
 		let kings = chessMatrix.flatMap {
 			
 			$0.filter({
@@ -224,7 +237,7 @@ extension ChessBoard {
 		
 		let _ = analyse(king: whiteKing)
 		let _ = analyse(king: blackKing)
-
+		
 		currentTurn = currentTurn.inverted()
 		removeTurnGhosts()
 	}
@@ -270,6 +283,27 @@ extension ChessBoard {
 		case noValidMoves
 	}
 	
+	func analyse(king: ChessPiece) -> KingFlag {
+		guard king is King else {
+			fatalError("Supplied Piece is not a King, developer error")
+		}
+		
+		let allies = getPieces(withColor: king.color)
+		let enemies = getPieces(withColor: king.color.inverted())
+		var (underAttack, directAttacks) = isUnderAttack(
+			piece: king,
+			enemies: enemies
+		)
+		
+		var kingMoves = getValidMoves(for: king)
+		var kingAttacks = getValidAttacks(for: king)
+		
+		
+		return .noValidMoves
+	}
+	
+	
+	
 	func getPieces(withColor color: ChessColor) -> [ChessPiece] {
 		return chessMatrix.flatMap({
 			$0.filter {
@@ -280,136 +314,17 @@ extension ChessBoard {
 		})
 	}
 	
-	func filterValidAttacks(enemies: [ChessPiece], attacked: ChessPiece) -> [ChessPiece] {
-		var directAttacks = enemies.filter {
-			let temp = $0.currentAttack.filter {
-				$0.contains(where: {
-					attacked.position == $0
-				})
-			}
-			
-			return !temp.isEmpty
+	func isUnderAttack(piece: ChessPiece,
+					   enemies: [ChessPiece]) -> (Bool, [ChessPiece]) {
+		var directAttacks = enemies.filter { enemy in
+			return canAttackReach(position: piece.position,
+								  withPiece: enemy)
 		}
-		
-		
-		pieceLoop: for pieces in directAttacks {
-			for dir in pieces.currentAttack {
-				let hasAttacked = dir.contains( where: {
-					$0 == attacked.position
-				})
-				
-				if !hasAttacked { continue }
-				
-				for position in dir {
-					let (x,y) = position
-					guard let other = chessMatrix[y][x] else { continue }
-					
-					if other === attacked {
-						continue pieceLoop
-					}
-					else {
-						break
-					}
-					
-				}
-			}
-			
-			directAttacks.removeFirst()
-		}
-		
-		return directAttacks
-	}
-	
-	
-	func analyse(king: ChessPiece) -> KingFlag {
-		guard king is King else {
-			fatalError("Supplied Piece is not a King, developer error")
-		}
-		print("king is \(king.color)")
-		let allies = getPieces(withColor: king.color)
-		let enemies = getPieces(withColor: king.color.inverted())
-		var directAttacks = filterValidAttacks(enemies: enemies, attacked: king)
-		
-		for directAttack in directAttacks{
-			for ally in allies {
-				if canAttackReach(
-					position: directAttack.position,
-					withPiece: ally
-				) {
-					directAttacks.removeAll(where: { $0 === directAttack })
-				}
-			}
-		}
-	
-		
-		var kingMatrix = king.currentAttack
-			.filter({ row in
-				!row.filter({ (x,y) in
-					chessMatrix[y][x] == nil
-				}).isEmpty
-			})
-			.map{ $0.map({ (0, $0) })}
-		
-		for (y,row) in kingMatrix.enumerated() {
-			for (x,(_, pos)) in row.enumerated() {
-				enemies.forEach {
-					if canAttackReach(position: pos, withPiece: $0) {
-						kingMatrix[y][x].0 += 1
-					}
-				}
-			}
-		}
-		
-		autoreleasepool{
-			for (y,row) in kingMatrix.enumerated() {
-				for (x,(_, pos)) in row.enumerated() {
-					let filtered = enemies.filter {
-						$0.position == pos
-					}
-					guard !filtered.isEmpty else { continue }
-					let copy = enemies.filter({ curr in
-						!filtered.contains(where: { $0.position == curr.position })
-					})
-					filteredEnemies: for enemy in filtered {
-						var reached = false
-						for others in copy {
-							if canAttackReach(
-								position: enemy.position,
-								withPiece: others
-							) {
-								reached = true
-								break
-							}
-						}
-						if reached { continue }
-						kingMatrix[y][x].0 = 0
-					}
-				}
-			}
-		}
-		
-		let hasValidMove = kingMatrix.contains(where: {
-			$0.contains(where: { $0.0 == 0 })
-		})
-		
-		if hasValidMove && !directAttacks.isEmpty {
-			return .onCheck
-		}
-		
-		if !hasValidMove && !directAttacks.isEmpty {
-			return .checkMate
-		}
-		
-		if !hasValidMove || directAttacks.isEmpty {
-			return .safe
-		}
-		
-		
-		return .noValidMoves
+		return (!directAttacks.isEmpty, directAttacks)
 	}
 	
 	func canAttackReach(position: BoardCoords, withPiece piece: ChessPiece ) -> Bool {
-		for attack in piece.currentAttack {
+		for attack in piece.currentAttacks {
 			guard attack
 				.contains(where: {
 					$0 == position
