@@ -34,20 +34,12 @@ struct ChessView: View, ChessView.Delegate {
 		"Knight_black"
 	]
 	
-	var scene: ChessSceneInterface = ChessScene()
+	@State var scene: ChessSceneInterface = ChessScene()
 	
 	var body: some View {
 		ZStack {
 			
 			SpriteView(scene: scene, preferredFramesPerSecond: 60)
-				.onAppear {
-					scene
-						.configure(
-							whitePlayerName: "White",
-							blackPlayerName: "Black",
-							delegate: self
-						)
-				}
 				.background {
 					WindowAccessor { window in
 						if let window = window {
@@ -68,6 +60,19 @@ struct ChessView: View, ChessView.Delegate {
 				makeWinScreen(winner)
 			}
 		}
+		.onAppear {
+			scene.removeAllChildren()
+			scene.removeFromParent()
+			scene.delegate = nil
+			
+			scene = ChessScene()
+			scene
+				.configure(delegate: self)
+		}
+	}
+	
+	mutating func test() {
+		scene = ChessScene()
 	}
 	
 	@ViewBuilder

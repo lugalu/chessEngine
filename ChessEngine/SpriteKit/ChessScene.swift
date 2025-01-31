@@ -5,17 +5,18 @@ import SwiftUI
 
 protocol ChessSceneInterface: SKScene {
 	func updateSize(_ size: CGSize)
-	func configure(whitePlayerName: String, blackPlayerName: String, delegate: ChessView.Delegate?)
+	func configure(delegate: ChessView.Delegate?)
 	func upgradePawn(with: String)
 }
 protocol ChessCommunication {
 	func displaySelectionMenu()
 	func declareWinner(color: ChessColor)
 	func declareDraw()
+	func wantToResign()
 }
 class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	
-	let leftMenu: InformationMenu = InformationMenu()
+	lazy var leftMenu: InformationMenu = InformationMenu(delegate: self)
 	lazy var chessBoard: ChessBoard = ChessBoard(delegate: self)
 	var viewDelegate: ChessView.Delegate? = nil
 	//    lazy var upgradeMenu: SKSpriteNode = SKSpriteNode()
@@ -31,8 +32,6 @@ class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	}
 	
 	func configure(
-		whitePlayerName: String,
-		blackPlayerName: String,
 		delegate: ChessView
 			.Delegate?) {
 				viewDelegate = delegate
@@ -45,7 +44,7 @@ class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	func updateSize(_ size: CGSize) {
 		self.size = size
 		leftMenu.size.height = size.height
-		
+		leftMenu.updateSize(newHeight: size.height)
 		let squareSize = ResizeMath.getSquare(from: size)
 		chessBoard.size = squareSize
 		
@@ -64,17 +63,32 @@ class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	
 	
 	func displaySelectionMenu() {
+		guard !isPaused else { return }
+
 		self.isPaused = true
 		viewDelegate?.openMenu(withColor: chessBoard.currentTurn)
 	}
 	
 	func declareWinner(color: ChessColor){
+		guard !isPaused else { return }
+
 		viewDelegate?.declareWinner(color: color)
 		self.isPaused = true
+		leftMenu.isPaused = true
+
 	}
 	
 	func declareDraw(){
+		guard !isPaused else { return }
+
 		viewDelegate?.declareDraw()
+		self.isPaused = true
+	}
+	
+	func wantToResign() {
+		guard !isPaused else { return }
+		let turn = chessBoard.currentTurn
+		declareWinner(color: turn.inverted())
 		self.isPaused = true
 	}
 	
