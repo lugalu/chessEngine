@@ -10,6 +10,8 @@ protocol ChessSceneInterface: SKScene {
 }
 protocol ChessCommunication {
 	func displaySelectionMenu()
+	func declareWinner(color: ChessColor)
+	func declareDraw()
 }
 class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	
@@ -64,6 +66,16 @@ class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	func displaySelectionMenu() {
 		self.isPaused = true
 		viewDelegate?.openMenu(withColor: chessBoard.currentTurn)
+	}
+	
+	func declareWinner(color: ChessColor){
+		viewDelegate?.declareWinner(color: color)
+		self.isPaused = true
+	}
+	
+	func declareDraw(){
+		viewDelegate?.declareDraw()
+		self.isPaused = true
 	}
 	
 	func upgradePawn(with name: String) {

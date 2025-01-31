@@ -7,10 +7,14 @@ import SpriteKit
 struct ChessView: View, ChessView.Delegate {
 	protocol Delegate {
 		func openMenu(withColor: ChessColor)
+		func declareWinner(color: ChessColor)
+		func declareDraw()
 	}
+	@Environment(\.dismiss) var dismiss
 	@State var showUpgradeMenu: Bool = false
 	@State var color: ChessColor? = nil
 	@State var pieceIndex: Int = -1
+	@State var winner: String? = nil
 	
 	var selectedArray: [String] {
 		return color == .white ? whitePieces : blackPieces
@@ -59,6 +63,10 @@ struct ChessView: View, ChessView.Delegate {
 			if showUpgradeMenu {
 				makeMenu()
 			}
+			
+			if let winner {
+				makeWinScreen(winner)
+			}
 		}
 	}
 	
@@ -105,13 +113,42 @@ struct ChessView: View, ChessView.Delegate {
 		}
 		.background{
 			RoundedRectangle(cornerRadius: 15)
-				.fill(Color.gray)
+				.fill(Color.secondary)
+		}
+	}
+	
+	@ViewBuilder
+	func makeWinScreen(_ winner: String) -> some View {
+		VStack{
+			let winner = winner == "Draw" ? winner : "\(winner) won!"
+			Text(winner)
+				.font(.largeTitle)
+				.bold()
+			
+			Button(action: {
+				dismiss()
+			}){
+				Text("OK!")
+			}
+			.buttonStyle(.bordered)
+		}
+		.background{
+			RoundedRectangle(cornerRadius: 15)
+				.fill(Color.secondary)
 		}
 	}
 	
 	func openMenu(withColor color: ChessColor) {
 		showUpgradeMenu = true
 		self.color = color
+	}
+	
+	func declareWinner(color: ChessColor) {
+		winner = color.rawValue
+	}
+	
+	func declareDraw() {
+		winner = "Draw"
 	}
 	
 	func selectedPiece() {

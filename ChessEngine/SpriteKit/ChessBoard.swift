@@ -249,15 +249,18 @@ extension ChessBoard {
 		print(whiteKingStatus, blackKingStatus)
 		
 		if whiteKingStatus == blackKingStatus && whiteKingStatus == .checkMate {
-			// DRAW
+			delegate?.declareDraw()
+			return
 		}
 		
 		if whiteKingStatus == .checkMate {
-			//black wins
+			delegate?.declareWinner(color: .black)
+			return
 		}
 		
 		if blackKingStatus == .checkMate {
-			//white wins
+			delegate?.declareWinner(color: .white)
+			return
 		}
 		
 		
