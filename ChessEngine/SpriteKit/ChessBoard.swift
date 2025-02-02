@@ -19,32 +19,41 @@ class ChessBoard: SKSpriteNode{
 	var squarePool: [InteractiveTile] = NodeFactory.makeSpareSquares()
 	var inUseSquares: [InteractiveTile] = []
 	
-	
 	init(delegate: ChessCommunication?) {
 		self.delegate = delegate
 		super.init(texture: nil, color: .clear, size: .zero)
 		self.isUserInteractionEnabled = true
 		self.anchorPoint = CGPoint(x: 0, y: 0)
 		
+		configure()
+	}
+	
+	required init?(coder aDecoder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+	
+	func configure() {
 		let rowColumn = Int(Constants.chessRowsColumns)
 		for y in 0..<rowColumn{
 			for x in 0..<rowColumn {
-				self.addChild(nodeGrid[y][x])
+				if nodeGrid[y][x].parent == nil {
+					self.addChild(nodeGrid[y][x])
+				}
 				
-				guard let piece = chessMatrix[y][x] else { continue }
+				guard let piece = chessMatrix[y][x],
+					  piece.sprite.parent == nil else {
+					continue
+				}
 				self.addChild(piece.sprite)
 			}
 		}
 		
 		squarePool.forEach { item in
-			self.addChild(item)
+			if item.parent == nil {
+				self.addChild(item)
+			}
 		}
-		
-		
-	}
-	
-	required init?(coder aDecoder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
 	}
 	
 	func updateGrid() {
@@ -72,6 +81,23 @@ class ChessBoard: SKSpriteNode{
 				)
 			}
 		}
+	}
+	
+	func reset() {
+		chessMatrix
+			.flatMap({ $0 })
+			.compactMap({ $0 })
+			.forEach({
+				$0.sprite.removeFromParent()
+			})
+		chessMatrix = PieceFactory.makeMatrix()
+		configure()
+		updateGrid()
+		currentTurn = .white
+		upgradePos = nil
+		selectedPiece = nil
+		
+		removeSpares()
 	}
 	
 	
@@ -266,6 +292,7 @@ extension ChessBoard {
 		
 		currentTurn = currentTurn.inverted()
 		removeTurnGhosts()
+		delegate?.onTurnChange(newTurn: currentTurn)
 	}
 	
 	func removeTurnGhosts() {
@@ -307,8 +334,6 @@ extension ChessBoard {
 		case onCheck
 		case checkMate
 	}
-	
-
 	
 
 	

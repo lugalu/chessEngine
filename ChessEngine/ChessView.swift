@@ -34,21 +34,12 @@ struct ChessView: View, ChessView.Delegate {
 		"Knight_black"
 	]
 	
-	@State var scene: ChessSceneInterface = ChessScene()
+	let scene: ChessSceneInterface = ChessScene()
 	
 	var body: some View {
 		ZStack {
 			
-			SpriteView(scene: scene, preferredFramesPerSecond: 60)
-				.background {
-					WindowAccessor { window in
-						if let window = window {
-							let delegate = WindowDelegate.shared
-							delegate.notified = scene
-							window.delegate = delegate
-						}
-					}
-				}
+			SpriteView(scene: scene)
 				.navigationTitle("")
 				.navigationBarBackButtonHidden()
 			
@@ -60,19 +51,25 @@ struct ChessView: View, ChessView.Delegate {
 				makeWinScreen(winner)
 			}
 		}
-		.onAppear {
-			scene.removeAllChildren()
-			scene.removeFromParent()
-			scene.delegate = nil
-			
-			scene = ChessScene()
-			scene
-				.configure(delegate: self)
+		.background{
+			WindowAccessor { window in
+				if let window = window {
+					let delegate = WindowDelegate.shared
+					delegate.notified = scene
+					window.delegate = delegate
+				}
+			}
 		}
-	}
-	
-	mutating func test() {
-		scene = ChessScene()
+		.onAppear {
+			scene.isPaused = false
+			scene.configure(delegate: self)
+			
+		}
+		.onDisappear {
+			scene.reset()
+			winner = nil
+			showUpgradeMenu = false
+		}
 	}
 	
 	@ViewBuilder
@@ -111,14 +108,15 @@ struct ChessView: View, ChessView.Delegate {
 			}
 			.disabled(pieceIndex == -1)
 			.buttonStyle(.borderedProminent)
-			.tint(.gray)
 			.padding(.bottom, 16)
 			.controlSize(.extraLarge)
 			
 		}
+		.padding(.vertical, 8)
+		.padding(.horizontal, 16)
 		.background{
 			RoundedRectangle(cornerRadius: 15)
-				.fill(Color.secondary)
+				.fill(Color.init(white: 0.3))
 		}
 	}
 	
@@ -127,7 +125,7 @@ struct ChessView: View, ChessView.Delegate {
 		VStack{
 			let winner = winner == "Draw" ? winner : "\(winner) won!"
 			Text(winner)
-				.font(.largeTitle)
+				.font(.system(size: 72))
 				.bold()
 			
 			Button(action: {
@@ -136,10 +134,13 @@ struct ChessView: View, ChessView.Delegate {
 				Text("OK!")
 			}
 			.buttonStyle(.bordered)
+			.controlSize(.extraLarge)
 		}
+		.padding(.vertical, 8)
+		.padding(.horizontal, 16)
 		.background{
 			RoundedRectangle(cornerRadius: 15)
-				.fill(Color.secondary)
+				.fill(Color.init(white: 0.3))
 		}
 	}
 	

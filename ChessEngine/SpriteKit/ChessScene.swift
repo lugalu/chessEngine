@@ -7,19 +7,20 @@ protocol ChessSceneInterface: SKScene {
 	func updateSize(_ size: CGSize)
 	func configure(delegate: ChessView.Delegate?)
 	func upgradePawn(with: String)
+	func reset()
 }
 protocol ChessCommunication {
 	func displaySelectionMenu()
 	func declareWinner(color: ChessColor)
 	func declareDraw()
 	func wantToResign()
+	func onTurnChange(newTurn: ChessColor)
 }
 class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	
 	lazy var leftMenu: InformationMenu = InformationMenu(delegate: self)
 	lazy var chessBoard: ChessBoard = ChessBoard(delegate: self)
 	var viewDelegate: ChessView.Delegate? = nil
-	//    lazy var upgradeMenu: SKSpriteNode = SKSpriteNode()
 	
 	override init() {
 		super.init(size: .zero)
@@ -29,6 +30,11 @@ class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 	
 	required init?(coder: NSCoder) {
 		fatalError("Init with Coder not implemented")
+	}
+	
+	func reset() {
+		chessBoard.reset()
+		leftMenu.reset()
 	}
 	
 	func configure(
@@ -108,5 +114,9 @@ class ChessScene: SKScene, ChessSceneInterface, ChessCommunication  {
 		
 		chessBoard.upgradePawn(with: piece)
 		
+	}
+	
+	func onTurnChange(newTurn: ChessColor) {
+		leftMenu.update(turn: newTurn)
 	}
 }

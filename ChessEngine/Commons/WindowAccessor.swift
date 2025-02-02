@@ -7,11 +7,9 @@ struct WindowAccessor: NSViewRepresentable {
     
     func makeNSView(context: Context) -> NSView {
         let nsView = NSView()
-        DispatchQueue.main.async {
-            if let window = nsView.window {
-                callback(window)
-            }
-        }
+		if let window = nsView.window {
+			callback(window)
+		}
         return nsView
     }
     

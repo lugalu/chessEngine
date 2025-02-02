@@ -16,9 +16,13 @@ class InformationMenu: SKSpriteNode {
 	
 	init(delegate: ChessCommunication?){
 		self.delegate = delegate
-        super.init(texture: nil, color: .red, size: CGSize(width: 250, height: 0))
-        self.anchorPoint = .zero
+		super.init(
+			texture: nil,
+			color: .clear,
+			size: CGSize(width: 250, height: 0)
+		)
 		
+        self.anchorPoint = .zero
 		self.addChild(turnLabel)
 		self.addChild(giveUpButton)
 		self.addChild(deadPositionButton)
@@ -40,6 +44,14 @@ class InformationMenu: SKSpriteNode {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+	
+	func reset() {
+		turnLabel.text = "White"
+	}
+	
+	func update(turn: ChessColor) {
+		turnLabel.text = turn.rawValue.capitalized
+	}
 }
 
 class GenericButton: SKSpriteNode {
@@ -50,7 +62,7 @@ class GenericButton: SKSpriteNode {
 		onClick = action
 		super.init(texture: nil, color: .darkGray, size: .zero)
 		self.label.text = labelText
-		self.label.fontSize = 32
+		self.label.fontSize = 24
 		self.isUserInteractionEnabled = true
 		self.addChild(label)
 		label.position = CGPoint(x: self.size.width / 2,
